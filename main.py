@@ -65,12 +65,13 @@ def interviewee_submit(submission):
 
 
 @app.route("/end-interview")
-def finish_interview():
+def end_interview(interview_id):
     """
         implement the interview ending process, NO openai call
         1. Construct the ending prompt which is static
         2. Calculate the ranking or score of the interview result
         3. Log or save the event to file / DB
+    :param interview_id: integer
     :return:
         {
         "interview_id": "xxxx-xxxx-xxxx",
@@ -123,3 +124,22 @@ def interview_result():
     result = dict()
     return result
 
+
+@app.route("/resume-interview")
+def resume_interview(interview_id):
+    """
+        When the conversation is lost from the UI, call this API to resume
+    :param interview_id: integer
+    :return: [
+                {
+                "question_seq": n,
+                "question_body": "xxx",
+                "answer": "xxx",
+                "score/ranking": "xxx"
+                },
+                {...}
+            ]
+    """
+
+    result = dict()
+    return result
