@@ -1,4 +1,6 @@
 from flask import Flask
+from entities import Interview, Question
+
 
 app = Flask(__name__)
 
@@ -12,6 +14,7 @@ def preload_question_categories():
 
 
 question_dict = preload_question_categories()
+interview_dict: dict[str, Interview] = dict()
 
 
 @app.route("/")
@@ -32,8 +35,9 @@ def start_interview():
         "question_body": "please briefly introduce a project you worked on"
         }
     """
-
-    return dict()
+    interview = Interview()
+    interview_dict[interview.interview_id] = interview
+    return interview.get_next_question()
 
 
 @app.route("/interviewee-submit")
@@ -60,8 +64,11 @@ def interviewee_submit(submission):
         "question_body": "the body text"
         }
     """
-    question = dict()
-    return question
+    if not submission['interview_id']:
+        raise Exception('invalid interview id')
+    interview = interview_dict.get(submission['interview_id'])
+    interview.submit_answer(submission)
+    return interview.get_next_question()
 
 
 @app.route("/end-interview")
