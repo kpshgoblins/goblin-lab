@@ -1,6 +1,19 @@
 import openai
 import uuid
 from .question import Question
+from .chat import talk_to_gpt
+
+intro_tail_prompt = "Can you ask a technology question based on the above description? " \
+                    "And please don't ask anything already provided. " \
+                    "Please only give me the question content without any interactive words." \
+                    "And I only want one question."
+
+
+answer_tail_prompt = "Can you check if the above answer to the above question is right?" \
+                     "If it's perfect, please give me A without any interactive words." \
+                     "If the answer contains partially incorrect statements, please give me B without any interactive words." \
+                     "If the most of the statements are wrong, please give me F without any interactive words."
+
 
 class Interview(object):
     def __init__(self,
