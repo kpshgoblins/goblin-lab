@@ -3,3 +3,4 @@ openai
 pandas
 tiktoken
 numpy
+python-dotenv
