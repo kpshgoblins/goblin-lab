@@ -23,6 +23,7 @@ challenge_question_prompt = "Can you please challenge one of the wrong parts fro
                             "Please only give me the question content without any interactive words." \
                             "And I only want one question."
 
+
 class Interview(object):
     def __init__(self,
                  interview_id: str = None,
@@ -53,7 +54,7 @@ class Interview(object):
         return {1: init_q}
 
     def get_latest_question_seq(self):
-        print("current question length: {}".format(len(self.questions)))
+        # print("current question length: {}".format(len(self.questions)))
         return len(self.questions)
 
     def get_latest_question(self) -> Question:
@@ -70,24 +71,18 @@ class Interview(object):
         next_q = Question(question_seq=next_q_seq)
         self.questions[next_q_seq] = next_q
 
-    def process_gpt_response(self, gpt_response):
-        if gpt_response in ['A.', 'A', 'a.', 'a']:
-            next_prompt = new_question_prompt
-        elif gpt_response in ['B.', 'B', 'b.', 'b']:
-            next_prompt = challenge_question_prompt
-        else:
-            next_prompt = new_question_prompt
-        return next_prompt
-
     def submit_answer(self, submission):
-        current_q: Question = self.questions.get(int(submission['question_seq']))
+        if int(submission['question_seq']) != self.get_latest_question().question_seq:
+            raise Exception("question_seq_error")
+
         answer = str(submission['answer'])
-        current_q.answer_question(answer)
-        current_q.append_message(role="user",
-                                 message="Question: {}\n"
-                                         "Answer: {}\n".format(current_q.question_body, answer))
-        current_q.append_message(role="system",
-                                 message=answer_tail_prompt)
+        self.get_latest_question().answer_question(answer)
+        self.get_latest_question().append_message(role="user",
+                                                  message="Question: {}\n"
+                                                          "Answer: {}\n"
+                                                  .format(self.get_latest_question().question_body, answer))
+        self.get_latest_question().append_message(role="system",
+                                                  message=answer_tail_prompt)
 
         for m in self.get_all_conversation_history():
             print(m.serialise)
@@ -98,19 +93,20 @@ class Interview(object):
         # TODO maybe there is better way for this piece of logic
         if gpt_response_msg in ['A.', 'A', 'a.', 'a']:
             self.generate_next_question()
-            self.get_latest_question().append_message('user', new_question_prompt)
+            self.get_latest_question().append_message('system', new_question_prompt)
         elif gpt_response_msg in ['B.', 'B', 'b.', 'b']:
             if self.get_latest_question().back_n_forth < 3:
-                current_q.append_message(role="user",
-                                         message="Question: {}\n"
-                                                 "Answer: {}\n".format(current_q.question_body, answer))
+                self.get_latest_question().append_message(role="user",
+                                                          message="Question: {}\n"
+                                                                  "Answer: {}\n"
+                                                          .format(self.get_latest_question().question_body, answer))
                 self.get_latest_question().append_message('system', challenge_question_prompt)
             else:
                 self.generate_next_question()
-                self.get_latest_question().append_message('user', new_question_prompt)
+                self.get_latest_question().append_message('system', new_question_prompt)
         else:
             self.generate_next_question()
-            self.get_latest_question().append_message('user', new_question_prompt)
+            self.get_latest_question().append_message('system', new_question_prompt)
 
         gpt_response_msg = talk_to_gpt(self.api_key, self.get_all_conversation_history())
         self.get_latest_question().set_question_body(gpt_response_msg)
