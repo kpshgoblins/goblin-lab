@@ -19,6 +19,7 @@ new_question_prompt = "Can you please ask a technology question based on the abo
                       "And I only want one question."
 
 challenge_question_prompt = "Can you please challenge one of the wrong parts from the above answer to the above question?" \
+                            "If the answer is wrong and there is no need to challenge, please give me a single word F without any interactive words." \
                             "Please don't ask duplicate questions in this conversation." \
                             "Please only give me the question content without any interactive words." \
                             "And I only want one question."
