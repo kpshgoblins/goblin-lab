@@ -1,6 +1,6 @@
-from flask import Flask
+from flask import Flask, request
 from entities import Interview, Question
-
+from flask import jsonify, make_response
 
 app = Flask(__name__)
 
@@ -37,11 +37,12 @@ def start_interview():
     """
     interview = Interview()
     interview_dict[interview.interview_id] = interview
-    return interview.get_next_question()
+    response_json = get_question_response(interview, interview.get_latest_question())
+    return make_response(response_json, 200)
 
 
-@app.route("/interviewee-submit")
-def interviewee_submit(submission):
+@app.route("/interviewee-submit", methods=['POST'])
+def interviewee_submit():
     """
         implement the interviewee submission process
         1. Receive the submission from interviewee
@@ -64,11 +65,15 @@ def interviewee_submit(submission):
         "question_body": "the body text"
         }
     """
-    if not submission['interview_id']:
-        raise Exception('invalid interview id')
+    submission = request.get_json()
+    if 'interview_id' not in submission or not submission['interview_id']:
+        return make_response('invalid_interview_id', 500)
     interview = interview_dict.get(submission['interview_id'])
+    if interview is None:
+        return make_response('invalid_interview_id', 500)
     interview.submit_answer(submission)
-    return interview.get_next_question()
+    response_json = get_question_response(interview, interview.get_latest_question())
+    return make_response(response_json, 200)
 
 
 @app.route("/end-interview")
@@ -150,3 +155,10 @@ def resume_interview(interview_id):
 
     result = dict()
     return result
+
+
+def get_question_response(interview: Interview, question: Question):
+    response_json = question.serialise
+    response_json['interview_id'] = interview.interview_id
+    response_json['message_history'] = [x.serialise for x in interview.get_all_conversation_history()]
+    return response_json
