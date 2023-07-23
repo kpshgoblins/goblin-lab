@@ -101,7 +101,10 @@ class Interview(object):
             self.get_latest_question().append_message('user', new_question_prompt)
         elif gpt_response_msg in ['B.', 'B', 'b.', 'b']:
             if self.get_latest_question().back_n_forth < 3:
-                self.get_latest_question().append_message('user', challenge_question_prompt)
+                current_q.append_message(role="user",
+                                         message="Question: {}\n"
+                                                 "Answer: {}\n".format(current_q.question_body, answer))
+                self.get_latest_question().append_message('system', challenge_question_prompt)
             else:
                 self.generate_next_question()
                 self.get_latest_question().append_message('user', new_question_prompt)
