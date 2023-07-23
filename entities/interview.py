@@ -18,6 +18,7 @@ answer_tail_prompt = "Can you check if the above answer to the above question is
                      "If the most of the statements are wrong, please give me F without any interactive words."
 
 new_question_prompt = "Can you please ask a technology question based on the above conversation?" \
+                      "This question must be related to {}." \
                       "Please don't ask duplicate questions in this conversation." \
                       "Please only give me the question content without any interactive words." \
                       "And I only want one question."
@@ -43,6 +44,25 @@ class Interview(object):
         else:
             self.interview_id = interview_id
             self.questions = self.load_hist_msg()
+
+        self.question_categories = [
+            {"name": "core Python",
+             "count": 0,
+             "rank": "x"},
+            {"name": "core Java",
+             "count": 0,
+             "rank": "x"},
+            {"name": "relational database",
+             "count": 0,
+             "rank": "x"},
+            {"name": "devops",
+             "count": 0,
+             "rank": "x"},
+            {"name": "modern front-end technology",
+             "count": 0,
+             "rank": "x"},
+        ]
+        self.current_category_index = 0
 
     def generate_interview_id(self) -> str:
         return str(uuid.uuid4())
@@ -73,8 +93,19 @@ class Interview(object):
 
     def generate_next_question(self):
         next_q_seq = self.get_latest_question_seq() + 1
+        self.current_category_index = next_q_seq // 3  # 0-1-2 -> index=0, 3-4-5 -> index=1, ......
         next_q = Question(question_seq=next_q_seq)
         self.questions[next_q_seq] = next_q
+
+    def get_current_q_category(self):
+        return self.question_categories[self.current_category_index].get("name")
+
+    def increase_current_q_category_count(self):
+        curr_cnt = self.question_categories[self.current_category_index].get("count")
+        self.question_categories[self.current_category_index]["count"] = curr_cnt
+
+    def set_current_q_category_rank(self, rank):
+        self.question_categories[self.current_category_index]["rank"] = "A"
 
     def submit_answer(self, submission):
         if int(submission['question_seq']) != self.get_latest_question().question_seq:
@@ -98,9 +129,9 @@ class Interview(object):
         # TODO maybe there is better way for this piece of logic
         if gpt_response_msg in ['A.', 'A', 'a.', 'a']:
             self.generate_next_question()
-            self.get_latest_question().append_message('system', new_question_prompt)
+            self.get_latest_question().append_message('system', new_question_prompt.format(self.get_current_q_category()))
         elif gpt_response_msg in ['B.', 'B', 'b.', 'b']:
-            if self.get_latest_question().back_n_forth < 3:
+            if self.get_latest_question().back_n_forth < 2:
                 self.get_latest_question().append_message(role="user",
                                                           message="Question: {}\n"
                                                                   "Answer: {}\n"
@@ -108,10 +139,10 @@ class Interview(object):
                 self.get_latest_question().append_message('system', challenge_question_prompt)
             else:
                 self.generate_next_question()
-                self.get_latest_question().append_message('system', new_question_prompt)
+                self.get_latest_question().append_message('system', new_question_prompt.format(self.get_current_q_category()))
         else:
             self.generate_next_question()
-            self.get_latest_question().append_message('system', new_question_prompt)
+            self.get_latest_question().append_message('system', new_question_prompt.format(self.get_current_q_category()))
 
         gpt_response_msg = talk_to_gpt(self.api_key, self.get_all_conversation_history())
         self.get_latest_question().set_question_body(gpt_response_msg)
