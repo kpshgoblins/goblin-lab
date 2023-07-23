@@ -1,8 +1,13 @@
 from flask import Flask, request
 from entities import Interview, Question
-from flask import jsonify, make_response
+from flask import make_response
+from dotenv import load_dotenv
+import os
 
 app = Flask(__name__)
+
+load_dotenv()
+openai_api_key = os.getenv('openai_api_key')
 
 
 def preload_question_categories():
@@ -35,7 +40,7 @@ def start_interview():
         "question_body": "please briefly introduce a project you worked on"
         }
     """
-    interview = Interview()
+    interview = Interview(api_key=openai_api_key)
     interview_dict[interview.interview_id] = interview
     response_json = get_question_response(interview, interview.get_latest_question())
     return make_response(response_json, 200)
@@ -161,4 +166,5 @@ def get_question_response(interview: Interview, question: Question):
     response_json = question.serialise
     response_json['interview_id'] = interview.interview_id
     response_json['message_history'] = [x.serialise for x in interview.get_all_conversation_history()]
+    response_json['latest_question_seq'] = interview.get_latest_question_seq()
     return response_json
