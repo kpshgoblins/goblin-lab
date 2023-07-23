@@ -1,7 +1,11 @@
 import uuid
+import os
 from .question import Question
-
+from dotenv import load_dotenv
 from .chat import talk_to_gpt
+
+load_dotenv()
+init_question = os.getenv('init_question')
 
 intro_tail_prompt = "Can you ask a technology question based on the above description? " \
                     "And please don't ask anything already provided. " \
@@ -49,7 +53,7 @@ class Interview(object):
 
     def load_init_msg(self) -> dict:
         init_q = Question(question_seq=1,
-                          question_body="Please briefly introduce your favourite project in no more than 100 words.")
+                          question_body=init_question)
         init_q.append_message(role="system",
                               message="You're an interviewer who will interview software engineering candidates")
         return {1: init_q}
