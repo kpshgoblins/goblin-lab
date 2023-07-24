@@ -9,16 +9,6 @@ app = Flask(__name__)
 load_dotenv()
 openai_api_key = os.getenv('openai_api_key')
 
-
-def preload_question_categories():
-    """
-        Define some pre-configuration to control the overall prompt process
-    :return:
-    """
-    return dict()
-
-
-question_dict = preload_question_categories()
 interview_dict: dict[str, Interview] = dict()
 
 
